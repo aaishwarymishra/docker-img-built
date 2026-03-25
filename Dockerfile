@@ -5,13 +5,16 @@ ARG PTH_VERSION
 
 FROM pytorch/pytorch:${PTH_VERSION}-devel AS builder
 
-ENV PATH=/usr/bin:$PATH
+# Set env vars to allow pip install
+ENV PIP_BREAK_SYSTEM_PACKAGES=1
+ENV PIP_ROOT_USER_ACTION=ignore
 
 ARG HVD_VERSION
 
 # Build Horovod
 RUN     apt-get update && \
-        apt-get install -y --no-install-recommends git cmake build-essential && \
+        apt-get install -y --no-install-recommends git && \
+        pip install -U cmake && \
         git clone --depth 1 https://github.com/horovod/horovod.git /horovod && \
         cd /horovod && \
         git fetch --tags && \
@@ -20,7 +23,7 @@ RUN     apt-get update && \
         # temporary -std=c++17 fix
         sed -i "s/CMAKE_CXX_STANDARD 14/CMAKE_CXX_STANDARD 17/g" CMakeLists.txt && \
         sed -i "s/CMAKE_CXX_STANDARD 14/CMAKE_CXX_STANDARD 17/g" horovod/torch/CMakeLists.txt && \
-        HOROVOD_GPU_OPERATIONS=NCCL HOROVOD_NCCL_LINK=SHARED HOROVOD_WITHOUT_MPI=1 HOROVOD_WITH_PYTORCH=1 pip wheel --no-cache-dir . && \
+        HOROVOD_GPU_OPERATIONS=NCCL HOROVOD_NCCL_LINK=SHARED HOROVOD_WITHOUT_MPI=1 HOROVOD_WITH_PYTORCH=1 pip wheel --no-cache-dir --no-build-isolation . && \
         rm -rf /var/lib/apt/lists/*
 
 # Build runtime image
