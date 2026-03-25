@@ -1,0 +1,24 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+  workflow_dispatch: 
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build the Docker image
+      run: |
+            sudo docker build . --file Dockerfile --tag my-image-name:$(date +%s)   
+            --build-arg PTH_VERSION=2.10.0-cuda12.8-cudnn9
+            --build-arg HVD_VERSION=v0.28.1
+            --build-arg MSDP_VERSION=v0.14.0
